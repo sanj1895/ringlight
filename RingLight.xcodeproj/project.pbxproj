@@ -1,0 +1,319 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0B0000000000000000000001 /* RingLightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000001 /* RingLightApp.swift */; };
+		0B0000000000000000000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000002 /* ContentView.swift */; };
+		0B0000000000000000000003 /* CameraModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000003 /* CameraModel.swift */; };
+		0B0000000000000000000004 /* CameraPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000004 /* CameraPreview.swift */; };
+		0B0000000000000000000005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000005 /* Assets.xcassets */; };
+		0B0000000000000000000007 /* GlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000007 /* GlowView.swift */; };
+		0B0000000000000000000008 /* Look.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000008 /* Look.swift */; };
+		0B0000000000000000000009 /* CaptureLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000009 /* CaptureLibrary.swift */; };
+		0B000000000000000000000A /* GalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A000000000000000000000A /* GalleryView.swift */; };
+		0B000000000000000000000B /* PhotoEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A000000000000000000000B /* PhotoEditor.swift */; };
+		0B000000000000000000000C /* Portrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A000000000000000000000C /* Portrait.swift */; };
+		0B000000000000000000000D /* FrameWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A000000000000000000000D /* FrameWriter.swift */; };
+		0B000000000000000000000E /* Collage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A000000000000000000000E /* Collage.swift */; };
+		0B000000000000000000000F /* DualCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A000000000000000000000F /* DualCamera.swift */; };
+		0B0000000000000000000010 /* BurstPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000010 /* BurstPicker.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0A0000000000000000000001 /* RingLightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RingLightApp.swift; sourceTree = "<group>"; };
+		0A0000000000000000000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		0A0000000000000000000003 /* CameraModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraModel.swift; sourceTree = "<group>"; };
+		0A0000000000000000000004 /* CameraPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreview.swift; sourceTree = "<group>"; };
+		0A0000000000000000000005 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		0A0000000000000000000006 /* RingLight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RingLight.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A0000000000000000000007 /* GlowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlowView.swift; sourceTree = "<group>"; };
+		0A0000000000000000000008 /* Look.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Look.swift; sourceTree = "<group>"; };
+		0A0000000000000000000009 /* CaptureLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureLibrary.swift; sourceTree = "<group>"; };
+		0A000000000000000000000A /* GalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryView.swift; sourceTree = "<group>"; };
+		0A000000000000000000000B /* PhotoEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoEditor.swift; sourceTree = "<group>"; };
+		0A000000000000000000000C /* Portrait.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Portrait.swift; sourceTree = "<group>"; };
+		0A000000000000000000000D /* FrameWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameWriter.swift; sourceTree = "<group>"; };
+		0A000000000000000000000E /* Collage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Collage.swift; sourceTree = "<group>"; };
+		0A000000000000000000000F /* DualCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualCamera.swift; sourceTree = "<group>"; };
+		0A0000000000000000000010 /* BurstPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BurstPicker.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0D0000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0C0000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				0C0000000000000000000002 /* RingLight */,
+				0C0000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0C0000000000000000000002 /* RingLight */ = {
+			isa = PBXGroup;
+			children = (
+				0A0000000000000000000001 /* RingLightApp.swift */,
+				0A0000000000000000000002 /* ContentView.swift */,
+				0A0000000000000000000003 /* CameraModel.swift */,
+				0A0000000000000000000004 /* CameraPreview.swift */,
+				0A0000000000000000000007 /* GlowView.swift */,
+				0A0000000000000000000008 /* Look.swift */,
+				0A0000000000000000000010 /* BurstPicker.swift */,
+				0A000000000000000000000F /* DualCamera.swift */,
+				0A000000000000000000000E /* Collage.swift */,
+				0A000000000000000000000D /* FrameWriter.swift */,
+				0A000000000000000000000C /* Portrait.swift */,
+				0A000000000000000000000B /* PhotoEditor.swift */,
+				0A000000000000000000000A /* GalleryView.swift */,
+				0A0000000000000000000009 /* CaptureLibrary.swift */,
+				0A0000000000000000000005 /* Assets.xcassets */,
+			);
+			path = RingLight;
+			sourceTree = "<group>";
+		};
+		0C0000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0A0000000000000000000006 /* RingLight.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0E0000000000000000000001 /* RingLight */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 110000000000000000000002 /* Build configuration list for PBXNativeTarget "RingLight" */;
+			buildPhases = (
+				0D0000000000000000000001 /* Sources */,
+				0D0000000000000000000002 /* Frameworks */,
+				0D0000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RingLight;
+			productName = RingLight;
+			productReference = 0A0000000000000000000006 /* RingLight.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0F0000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					0E0000000000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 110000000000000000000001 /* Build configuration list for PBXProject "RingLight" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 0C0000000000000000000001;
+			productRefGroup = 0C0000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0E0000000000000000000001 /* RingLight */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0D0000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0B0000000000000000000005 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0D0000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0B0000000000000000000001 /* RingLightApp.swift in Sources */,
+				0B0000000000000000000002 /* ContentView.swift in Sources */,
+				0B0000000000000000000003 /* CameraModel.swift in Sources */,
+				0B0000000000000000000004 /* CameraPreview.swift in Sources */,
+				0B0000000000000000000007 /* GlowView.swift in Sources */,
+				0B0000000000000000000008 /* Look.swift in Sources */,
+				0B0000000000000000000010 /* BurstPicker.swift in Sources */,
+				0B000000000000000000000F /* DualCamera.swift in Sources */,
+				0B000000000000000000000E /* Collage.swift in Sources */,
+				0B000000000000000000000D /* FrameWriter.swift in Sources */,
+				0B000000000000000000000C /* Portrait.swift in Sources */,
+				0B000000000000000000000B /* PhotoEditor.swift in Sources */,
+				0B000000000000000000000A /* GalleryView.swift in Sources */,
+				0B0000000000000000000009 /* CaptureLibrary.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		100000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		100000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		100000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S4FQ54B672;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Ring Light";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Ring Light uses the front camera to take your selfies and videos.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Ring Light records sound with your videos.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Ring Light saves your photos and videos to your camera roll.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Ring Light shows the photos and videos you took with it, so you can view, edit and delete them.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sanjanaa.ringlight;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		100000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = S4FQ54B672;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Ring Light";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Ring Light uses the front camera to take your selfies and videos.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Ring Light records sound with your videos.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Ring Light saves your photos and videos to your camera roll.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Ring Light shows the photos and videos you took with it, so you can view, edit and delete them.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sanjanaa.ringlight;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		110000000000000000000001 /* Build configuration list for PBXProject "RingLight" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				100000000000000000000001 /* Debug */,
+				100000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		110000000000000000000002 /* Build configuration list for PBXNativeTarget "RingLight" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				100000000000000000000003 /* Debug */,
+				100000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0F0000000000000000000001 /* Project object */;
+}
