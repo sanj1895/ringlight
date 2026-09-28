@@ -9,6 +9,8 @@ struct CameraPreview: UIViewRepresentable {
     var source: () -> CIImage?
     var look: Look
     var dateStamp: Bool
+    /// SHAKE mode: seen through an old camera's selfie mirror or viewfinder.
+    var lens: OldLens?
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
@@ -27,6 +29,7 @@ struct CameraPreview: UIViewRepresentable {
         context.coordinator.source = source
         context.coordinator.look = look
         context.coordinator.dateStamp = dateStamp
+        context.coordinator.lens = lens
     }
 
     final class Coordinator: NSObject, MTKViewDelegate {
@@ -34,6 +37,7 @@ struct CameraPreview: UIViewRepresentable {
         var source: () -> CIImage? = { nil }
         var look: Look = .normal
         var dateStamp = false
+        var lens: OldLens?
 
         private lazy var queue = device?.makeCommandQueue()
         private lazy var ciContext = device.map { CIContext(mtlDevice: $0, options: [.cacheIntermediates: false]) }
@@ -51,6 +55,7 @@ struct CameraPreview: UIViewRepresentable {
             let size = view.drawableSize
             var image = frame.filling(CGRect(origin: .zero, size: size))
             image = look.apply(to: image, stamp: dateStamp ? Date() : nil)
+            if let lens { image = lens.apply(to: image) }
 
             let destination = CIRenderDestination(width: Int(size.width), height: Int(size.height),
                                                   pixelFormat: view.colorPixelFormat, commandBuffer: buffer,

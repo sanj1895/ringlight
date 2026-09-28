@@ -2,8 +2,23 @@ import CoreImage
 import CoreImage.CIFilterBuiltins
 import Vision
 
-/// Portrait mode: finds the person with Vision and blurs everything behind them.
-/// Works on either camera, live in the preview and on the saved photo.
+/// What happens behind the person.
+enum BackgroundEffect {
+    /// Portrait mode.
+    case blur
+    /// Backdrop mode.
+    case replace(CIImage)
+
+    func apply(to image: CIImage, mask: CIImage) -> CIImage {
+        switch self {
+        case .blur: PersonSegmenter.blurBackground(image, mask: mask)
+        case .replace(let backdrop): PersonSegmenter.replaceBackground(image, mask: mask, with: backdrop)
+        }
+    }
+}
+
+/// Portrait and backdrop modes: finds the person with Vision, then blurs or swaps
+/// everything behind them. Works on either camera, live in the preview and on the saved photo.
 final class PersonSegmenter {
     private let request = VNGeneratePersonSegmentationRequest()
 
@@ -27,6 +42,14 @@ final class PersonSegmenter {
     static func blurBackground(_ image: CIImage, mask: CIImage) -> CIImage {
         let radius = max(image.extent.width, image.extent.height) / 90
         let background = image.clampedToExtent().applyingGaussianBlur(sigma: radius).cropped(to: image.extent)
+        return put(image, over: background, mask: mask)
+    }
+
+    static func replaceBackground(_ image: CIImage, mask: CIImage, with backdrop: CIImage) -> CIImage {
+        put(image, over: backdrop.filling(image.extent), mask: mask)
+    }
+
+    private static func put(_ image: CIImage, over background: CIImage, mask: CIImage) -> CIImage {
         let blend = CIFilter.blendWithMask()
         blend.inputImage = image
         blend.backgroundImage = background

@@ -1,6 +1,7 @@
 import SwiftUI
 import UIKit
 import AVKit
+import PhotosUI
 
 struct RingPreset: Identifiable {
     let name: String
@@ -45,7 +46,11 @@ private let chip = Color.white.opacity(0.45)
 struct ContentView: View {
     @StateObject private var camera = CameraModel()
     @ObservedObject private var library = CaptureLibrary.shared
+    @ObservedObject private var tray = PrintTray.shared
+    @StateObject private var developer = PrintDeveloper()
     @State private var showGallery = false
+    @State private var showBackdropPicker = false
+    @State private var backdropItem: PhotosPickerItem?
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var ringOn = true
@@ -65,9 +70,21 @@ struct ContentView: View {
             // The camera, in the exact shape of what gets saved...
             GeometryReader { geo in
                 let rect = PreviewLayout.rect(in: geo.size, aspect: camera.previewAspect)
-                preview(size: rect.size)
-                    .frame(width: rect.width, height: rect.height)
-                    .position(x: rect.midX, y: rect.midY)
+                Group {
+                    if camera.mode == .shake {
+                        // SHAKE: an old instant camera. You aim with its selfie mirror or viewfinder.
+                        InstantCamera(isFront: camera.isFront, source: camera.frameSource(),
+                                      shotCount: camera.shotCount, ejecting: tray.ejecting != nil,
+                                      onEjected: { tray.ejecting = nil })
+                            .overlay { countdownOverlay }
+                            .contentShape(Rectangle())
+                            .onTapGesture { showControls.toggle() }
+                    } else {
+                        preview(size: rect.size)
+                    }
+                }
+                .frame(width: rect.width, height: rect.height)
+                .position(x: rect.midX, y: rect.midY)
             }
 
             // ...inside Snapchat-style ring light. It lights your face while you frame
@@ -76,6 +93,17 @@ struct ContentView: View {
                 GlowView(color: ringColor, intensity: ringIntensity, aspect: camera.previewAspect)
                     .ignoresSafeArea()
                     .allowsHitTesting(false)
+            }
+
+            // SHAKE: the print that just came out, developing as you shake.
+            if camera.mode == .shake, let front = tray.front, tray.ejecting != front.id {
+                DevelopingPrint(developer: developer) {
+                    withAnimation(.spring) { tray.front = nil }
+                }
+                .id(front.id)
+                .offset(y: 30)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(1)
             }
 
             VStack(spacing: 10) {
@@ -96,7 +124,11 @@ struct ContentView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 HStack {
-                    galleryButton
+                    if camera.mode == .shake, !tray.waiting.isEmpty, tray.front == nil {
+                        printPile
+                    } else {
+                        galleryButton
+                    }
                     Spacer()
                     shutterButton
                     Spacer()
@@ -107,6 +139,22 @@ struct ContentView: View {
             .padding(.vertical, 8)
         }
         .overlay(alignment: .top) { toast }
+        .overlay(alignment: .trailing) {
+            if camera.look == .fisheye, showControls {
+                fisheyeSlider
+                    .padding(.trailing, 10)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: camera.look)
+        .photosPicker(isPresented: $showBackdropPicker, selection: $backdropItem, matching: .images)
+        .onChange(of: backdropItem) { _, item in
+            guard let item else { return }
+            Task {
+                if let data = try? await item.loadTransferable(type: Data.self) { camera.setCustomBackdrop(data) }
+                backdropItem = nil
+            }
+        }
         .fullScreenCover(isPresented: $showGallery) {
             GalleryView(library: library) { showGallery = false }
         }
@@ -128,6 +176,13 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.25), value: showControls)
         .animation(.easeInOut(duration: 0.25), value: ringOn)
         .animation(.easeInOut(duration: 0.25), value: camera.toast)
+        .animation(.spring(duration: 0.5), value: tray.front)
+        .onChange(of: tray.front) { _, front in
+            developer.show(camera.mode == .shake ? front : nil)
+        }
+        .onChange(of: camera.mode) { _, mode in
+            developer.show(mode == .shake ? tray.front : nil)
+        }
         .onChange(of: selectedPreset) { _, preset in
             camera.setColoredLight(ringOn && preset != "White")
         }
@@ -139,6 +194,10 @@ struct ContentView: View {
         .onAppear {
             camera.start()
             if ringOn { lightOn() }
+            developer.onDeveloped = { print in
+                // Let "Developed ✓" show for a moment, then save it and clear it away.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { camera.saveDevelopedPrint(print) }
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
@@ -157,23 +216,9 @@ struct ContentView: View {
     // MARK: - Preview
 
     private func preview(size: CGSize) -> some View {
-        CameraPreview(source: camera.frameSource(), look: camera.look, dateStamp: camera.dateStamp)
+        CameraPreview(source: camera.frameSource(), look: camera.previewLook, dateStamp: camera.previewDateStamp)
             .opacity(shutterBlink ? 0.3 : 1)
-            .overlay {
-                if let count = camera.countdown {
-                    Text("\(count)")
-                        .font(.system(size: 120, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.5), radius: 10)
-                        .contentTransition(.numericText(countsDown: true))
-                } else if camera.cameraDenied {
-                    Text("Camera access is off.\nTurn it on in Settings → Ring Light.")
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.white)
-                        .padding()
-                }
-            }
-            .animation(.snappy, value: camera.countdown)
+            .overlay { countdownOverlay }
             .contentShape(Rectangle())
             .onTapGesture { showControls.toggle() }
             // In dual PiP, drag anywhere to move your selfie bubble.
@@ -182,6 +227,25 @@ struct ContentView: View {
                 camera.pipCenter = CGPoint(x: min(max(value.location.x / size.width, 0), 1),
                                            y: min(max(value.location.y / size.height, 0), 1))
             })
+    }
+
+    @ViewBuilder
+    private var countdownOverlay: some View {
+        Group {
+            if let count = camera.countdown {
+                Text("\(count)")
+                    .font(.system(size: 120, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.5), radius: 10)
+                    .contentTransition(.numericText(countsDown: true))
+            } else if camera.cameraDenied {
+                Text("Camera access is off.\nTurn it on in Settings → Ring Light.")
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.white)
+                    .padding()
+            }
+        }
+        .animation(.snappy, value: camera.countdown)
     }
 
     /// Recording time, booth/collage progress ("2/4") or burst count.
@@ -284,9 +348,35 @@ struct ContentView: View {
         .disabled(camera.isRecording || camera.busy)
     }
 
-    /// Collage 2/4, dual PiP/Split, or 0.5×/1× on the back camera.
+    /// Backdrop picker, collage 2/4, dual PiP/Split, or 0.5×/1× on the back camera.
     @ViewBuilder
     private var modeOption: some View {
+        if camera.mode == .backdrop {
+            Menu {
+                ForEach(Backdrop.builtIn) { backdrop in
+                    Button {
+                        camera.backdrop = backdrop
+                    } label: {
+                        if camera.backdrop == backdrop { Label(backdrop.name, systemImage: "checkmark") } else { Text(backdrop.name) }
+                    }
+                }
+                if camera.customBackdrop != nil {
+                    Button {
+                        camera.backdrop = .yourPhoto
+                    } label: {
+                        if camera.backdrop == .yourPhoto { Label("Your photo", systemImage: "checkmark") } else { Text("Your photo") }
+                    }
+                }
+                Divider()
+                Button {
+                    showBackdropPicker = true
+                } label: {
+                    Label("Choose from Photos…", systemImage: "photo.on.rectangle")
+                }
+            } label: {
+                chipLabel("photo.artframe", text: camera.backdrop.name, on: true)
+            }
+        }
         if camera.mode == .collage {
             toggleChip("square.grid.2x2", text: "\(camera.collageCount)", on: true, label: "Number of shots") {
                 camera.collageCount = camera.collageCount == 4 ? 2 : 4
@@ -322,6 +412,26 @@ struct ContentView: View {
     }
 
     // MARK: - Bottom controls
+
+    /// Fisheye strength, on the side of the screen: up = bulgier.
+    private var fisheyeSlider: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "circle.circle.fill")
+            Slider(value: $camera.fisheyeStrength, in: 0...1)
+                .frame(width: 170)
+                .rotationEffect(.degrees(-90))
+                .frame(width: 30, height: 170)
+            Image(systemName: "circle")
+        }
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundStyle(ink)
+        .tint(ink)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 6)
+        .background(chip, in: Capsule())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Fisheye strength")
+    }
 
     /// More intensity = the glow reaches further in = more light on your face.
     private var ringSlider: some View {
@@ -412,6 +522,32 @@ struct ContentView: View {
         case .burst: Text(pressing ? (camera.progress ?? "") : "HOLD").font(.caption2.weight(.heavy)).foregroundStyle(ink)
         default: EmptyView()
         }
+    }
+
+    /// SHAKE: undeveloped prints waiting on the pile. Tap to take one out and develop it.
+    private var printPile: some View {
+        Button {
+            tray.pickUp()
+        } label: {
+            ZStack {
+                ForEach(0..<min(tray.waiting.count, 3), id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color(red: 0.96, green: 0.95, blue: 0.92))
+                        .overlay(Rectangle().fill(Color(red: 0.13, green: 0.14, blue: 0.12)).padding(5).padding(.bottom, 10))
+                        .frame(width: 38, height: 50)
+                        .rotationEffect(.degrees(Double(index) * 7 - 7))
+                        .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+                }
+                Text("\(tray.waiting.count)")
+                    .font(.caption.weight(.heavy))
+                    .foregroundStyle(.white)
+                    .padding(5)
+                    .background(Circle().fill(.red))
+                    .offset(x: 22, y: -26)
+            }
+            .frame(width: 54, height: 54)
+        }
+        .accessibilityLabel("\(tray.waiting.count) prints to develop")
     }
 
     /// Your latest shot; opens the in-app gallery.

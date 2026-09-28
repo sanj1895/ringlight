@@ -21,24 +21,29 @@ Written in SwiftUI, AVFoundation and Core Image, with no dependencies.
 | Mode | What it does |
 | --- | --- |
 | Photo / Video | The basics |
-| Portrait | Blurs the background behind you (Vision person segmentation), live and in the photo |
-| Dual / Dual video | Front and back cameras at once, picture-in-picture (drag the bubble) or split screen |
 | Booth | 3-2-1 countdown before each of 4 shots, saved as a photo booth strip |
+| Shake | The screen turns into an old instant camera: aim with its little selfie mirror (front) or viewfinder (back). The print slides out blank and develops, in the look you picked, as you shake your phone, now or whenever you like. |
+| Backdrop | Cuts you out and puts you in front of any photo from your camera roll, or a built-in backdrop (school picture day, 90s lasers, pink studio, sky) |
+| Dual / Dual video | Front and back cameras at once, picture-in-picture (drag the bubble) or split screen |
 | Collage | 2 or 4 shots in one picture |
-| Burst | Hold the shutter, then pick the shots to keep |
 | Boomerang | A short clip that loops forward and back |
 | GIF | A choppy, looping animated GIF |
+| Portrait | Blurs the background behind you (Vision person segmentation), live and in the photo |
+| Burst | Hold the shutter, then pick the shots to keep |
 | Slo-mo | Up to 240 fps, saved in slow motion |
 | Timelapse | 2 pictures a second, played back at 15× |
 
 **Looks.** Each look is applied identically to the live preview, photos, videos, GIFs and
 strips, so what you see is what you get.
-- **Digicam:** mid-2000s CCD point-and-shoot (think Nikon Coolpix): ~5 MP, soft blooming
-  highlights, pastel-leaning color, fine grain
+- **Digicam:** matched to a real 2000s point-and-shoot flash photo: ~5 MP, smooth noise-reduced
+  detail (no film grain), deep blacks, and highlights that blow out to white and glow
 - **Disposable:** warm, punchy, heavy grain, light leak
 - **Polaroid:** faded instant film, saved inside a white instant-photo frame
 - **Camcorder:** VHS tape with scanlines, color smear and a `PLAY ▶` overlay
 - **B&W**
+- **Fisheye:** the bulgy 2000s skate-video lens, with rounded dark edges
+- **Lo-fi:** reposted-phone-video look: ~480p with real compression blocks, sharpening halos,
+  warm summer color, deep blacks and held-back highlights
 - **Normal**
 
 **Also**
@@ -80,7 +85,9 @@ Dual camera needs an iPhone that supports multi-camera capture (iPhone XS / XR o
 | `CameraPreview.swift` | Live preview with the look applied |
 | `Look.swift` | The looks, date stamp, and photo/video processing |
 | `DualCamera.swift` | Front + back multi-camera session and layouts |
-| `Portrait.swift` | Background blur |
+| `Portrait.swift` | Background blur and swap |
+| `Backdrop.swift` | Built-in backdrops |
+| `InstantCamera.swift`, `PrintTray.swift`, `PrintCard.swift` | Shake mode: the instant camera, undeveloped prints, shake-to-develop |
 | `Collage.swift` | Photo booth strips and collages |
 | `FrameWriter.swift` | Writes frames to video (boomerang, timelapse, dual video) and GIFs |
 | `CaptureLibrary.swift`, `GalleryView.swift`, `PhotoEditor.swift`, `BurstPicker.swift` | Gallery, editor and burst picker |

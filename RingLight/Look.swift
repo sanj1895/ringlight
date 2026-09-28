@@ -6,7 +6,7 @@ import UIKit
 /// The looks you can shoot with. Each one is applied the same way to the live preview,
 /// photos, videos, GIFs and strips, so what you see is what you get.
 enum Look: String, CaseIterable, Identifiable, Codable {
-    case normal, digicam, disposable, polaroid, camcorder, mono
+    case normal, digicam, disposable, polaroid, camcorder, mono, fisheye, lofi
 
     var id: String { rawValue }
 
@@ -18,6 +18,8 @@ enum Look: String, CaseIterable, Identifiable, Codable {
         case .polaroid: "Polaroid"
         case .camcorder: "Camcorder"
         case .mono: "B&W"
+        case .fisheye: "Fisheye"
+        case .lofi: "Lo-fi"
         }
     }
 
@@ -29,10 +31,20 @@ enum Look: String, CaseIterable, Identifiable, Codable {
         case .polaroid: "photo"
         case .camcorder: "video.fill"
         case .mono: "circle.lefthalf.filled"
+        case .fisheye: "circle.circle"
+        case .lofi: "play.rectangle.fill"
         }
     }
 
     static let context = CIContext(options: [.cacheIntermediates: false])
+
+    /// How strong the Fisheye look is, 0...1 (set with the side slider).
+    static var fisheyeStrength: Double {
+        get { strengthLock.lock(); defer { strengthLock.unlock() }; return storedFisheyeStrength }
+        set { strengthLock.lock(); storedFisheyeStrength = min(max(newValue, 0), 1); strengthLock.unlock() }
+    }
+    private static let strengthLock = NSLock()
+    nonisolated(unsafe) private static var storedFisheyeStrength = 0.75
 
     /// The resolution of the "sensor" this look pretends to have. This is where detail
     /// is lost, and it keeps the look the same on a preview frame and a 12 MP photo.
@@ -44,23 +56,26 @@ enum Look: String, CaseIterable, Identifiable, Codable {
         case .polaroid: 1400
         case .camcorder: 640     // standard-definition tape
         case .mono: 2400
+        case .fisheye: nil
+        case .lofi: 854          // about 480p, like a video that's been reposted a few times
         }
     }
 
     /// How big saved photos are (nil = the camera's full resolution).
     var photoLongSide: CGFloat? {
         switch self {
-        case .normal, .mono: nil
+        case .normal, .mono, .fisheye: nil
         case .digicam: 2592      // 5 MP
         case .disposable: 2400
         case .polaroid: 2000
         case .camcorder: 1440
+        case .lofi: 1280
         }
     }
 
     private var jpegQuality: CGFloat {
         switch self {
-        case .normal, .mono: 0.92
+        case .normal, .mono, .fisheye: 0.92
         default: 0.8             // everyday "Normal" JPEG quality
         }
     }
@@ -84,7 +99,7 @@ enum Look: String, CaseIterable, Identifiable, Codable {
             let up = outLong / (longSide * toSensor)
             output = process(sensor).transformed(by: CGAffineTransform(scaleX: up, y: up))
         } else {
-            output = Self.resample(image.transformed(by: origin), by: outLong / longSide)
+            output = process(Self.resample(image.transformed(by: origin), by: outLong / longSide))
         }
         let outSize = CGSize(width: (extent.width * outLong / longSide).rounded(),
                              height: (extent.height * outLong / longSide).rounded())
@@ -102,10 +117,10 @@ enum Look: String, CaseIterable, Identifiable, Codable {
     }
 
     /// A finished photo: the look at photo size, and the instant-photo border for Polaroid.
-    func finishPhoto(_ image: CIImage, stamp: Date?) -> CIImage {
+    func finishPhoto(_ image: CIImage, stamp: Date?, framed: Bool = true) -> CIImage {
         let output = apply(to: image, outputLongSide: photoLongSide ?? max(image.extent.width, image.extent.height),
                            stamp: stamp)
-        return self == .polaroid ? Self.polaroidFrame(output) : output
+        return self == .polaroid && framed ? Self.polaroidFrame(output) : output
     }
 
     func jpeg(_ image: CIImage) -> Data? {
@@ -125,17 +140,21 @@ enum Look: String, CaseIterable, Identifiable, Codable {
             return image
 
         case .digicam:
-            // Mid-2000s CCD point-and-shoot (Nikon Coolpix): not over-sharpened, soft
-            // blooming highlights, bright pastel-leaning color, gentle contrast.
-            img = Self.fringe(img, extent: extent, red: Self.zoom(1.0025, extent), blue: Self.zoom(0.9975, extent))
-            img = Self.sharpen(img, radius: 1.0, intensity: 0.25)
-            img = Self.exposure(img, 0.12)
-            img = Self.bloom(img, radius: 6, intensity: 0.3)
-            img = Self.curve(img, [0.02, 0.24, 0.52, 0.79, 0.98])
-            img = Self.vibrance(img, 0.35)
-            img = Self.warmth(img, target: 6250, tint: 3)
-            img = Self.vignette(img, 0.3)
-            img = Self.grain(img, extent: extent, luma: 0.16, chroma: 0.06)
+            // Matched to a real 2000s point-and-shoot flash photo:
+            // - no grain: the camera's noise reduction smears fine detail into a smooth, slightly waxy look
+            // - light in-camera sharpening (thin halos on edges)
+            // - deep blacks, bright flash-lit subjects, highlights that clip hard to white and glow
+            // - neutral whites and grays; skin stays warm and rich
+            img = img.applyingFilter("CINoiseReduction", parameters: ["inputNoiseLevel": 0.04, "inputSharpness": 0.2])
+            img = img.applyingFilter("CIMedianFilter")
+            img = Self.sharpen(img, radius: 1.4, intensity: 0.35)
+            img = Self.exposure(img, 0.1)
+            img = Self.curve(img, [0, 0.2, 0.52, 0.86, 1])
+            img = Self.halation(img, extent: extent)
+            // Muted color: a touch below the original, like the real camera (the contrast curve above adds some back).
+            img = Self.saturation(img, 0.8, contrast: 1)
+            img = Self.vignette(img, 0.35)
+            img = Self.grain(img, extent: extent, luma: 0.05, chroma: 0.02)  // just a trace, like the real noise floor
 
         case .disposable:
             // Cheap film camera with the flash on: warm, punchy, heavy grain, dark corners,
@@ -180,6 +199,38 @@ enum Look: String, CaseIterable, Identifiable, Codable {
             img = Self.warmth(img, target: 7000, tint: 0)
             img = Self.scanlines(img, extent: extent)
             img = Self.grain(img, extent: extent, luma: 0.18, chroma: 0.12)
+
+        case .fisheye:
+            // The 2000s skate-video lens: everything bulges out from the middle, and the
+            // picture rounds off into dark edges. Both grow with the strength slider.
+            let strength = Self.fisheyeStrength
+            let bump = CIFilter.bumpDistortion()
+            bump.inputImage = img
+            bump.center = CGPoint(x: extent.midX, y: extent.midY)
+            bump.radius = Float(max(extent.width, extent.height) * 0.62)
+            bump.scale = Float(strength * 0.8)  // stronger than this and the middle tears
+            img = bump.outputImage ?? img
+            let edge = CIFilter.radialGradient()
+            edge.center = CGPoint(x: extent.midX, y: extent.midY)
+            let reach = (extent.width * extent.width + extent.height * extent.height).squareRoot() / 2
+            edge.radius0 = Float(reach * (1 - 0.45 * strength))
+            edge.radius1 = Float(reach * (1.02 - 0.28 * strength))
+            edge.color0 = CIColor(red: 0, green: 0, blue: 0, alpha: 0)
+            edge.color1 = CIColor(red: 0, green: 0, blue: 0, alpha: 1)
+            if let dark = edge.outputImage { img = dark.composited(over: img) }
+
+        case .lofi:
+            // Matched to reposted phone footage:
+            // - low resolution with real compression blocks and smeared detail
+            // - sharpening halos hugging the edges, added after the compression
+            // - warm summer color, vivid but not overdone
+            // - deep blacks, with highlights held back so skies keep their clouds
+            img = img.applyingGaussianBlur(sigma: 0.6)
+            img = Self.curve(img, [0, 0.19, 0.5, 0.8, 0.92])
+            img = Self.vibrance(img, 0.3)
+            img = Self.warmth(img, target: 6000, tint: -3)
+            img = Self.compressed(img.cropped(to: extent), quality: 0.3)
+            img = Self.sharpen(img.clampedToExtent(), radius: 2, intensity: 0.9)
 
         case .mono:
             // Black and white with a bit of punch and fine grain.
@@ -282,6 +333,39 @@ enum Look: String, CaseIterable, Identifiable, Codable {
             .applyingFilter("CIMaximumCompositing", parameters: [kCIInputBackgroundImageKey: channel(0, 1, 0)])
             .applyingFilter("CIMaximumCompositing", parameters: [kCIInputBackgroundImageKey:
                                                                     channel(0, 0, 1).transformed(by: blue)])
+    }
+
+    /// A real low-quality JPEG round trip: blocky, smeared, like video that's been re-uploaded.
+    private static func compressed(_ image: CIImage, quality: CGFloat) -> CIImage {
+        guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+              let data = context.jpegRepresentation(of: image, colorSpace: space, options: [
+                  CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String): quality,
+              ]),
+              let decoded = CIImage(data: data) else { return image }
+        return decoded.transformed(by: CGAffineTransform(translationX: image.extent.minX, y: image.extent.minY))
+    }
+
+    /// Blown-out highlights glowing into their surroundings, like a small sensor with a flash.
+    private static func halation(_ image: CIImage, extent: CGRect) -> CIImage {
+        // Keep only the near-white parts...
+        let highlights = image
+            .applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: 4, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: 4, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: 4, w: 0),
+                "inputBiasVector": CIVector(x: -3.2, y: -3.2, z: -3.2, w: 0),
+            ])
+            .applyingFilter("CIColorClamp")
+        // ...spread them out softly, and add them back on top.
+        let glow = highlights
+            .applyingGaussianBlur(sigma: max(extent.width, extent.height) * 0.015)
+            .applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: 0.55, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: 0.52, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: 0.48, w: 0),
+            ])
+            .cropped(to: extent)
+        return glow.applyingFilter("CIScreenBlendMode", parameters: [kCIInputBackgroundImageKey: image])
     }
 
     private static func lightLeak(_ image: CIImage, extent: CGRect) -> CIImage {
@@ -421,15 +505,16 @@ enum Look: String, CaseIterable, Identifiable, Codable {
 
     // MARK: - Photos and videos
 
-    /// A camera photo with the look, date stamp and (optionally) portrait blur, as JPEG.
-    /// Returns the original data untouched when there's nothing to do.
-    static func processPhoto(_ data: Data, look: Look, stamp: Date?, portrait: Bool) -> Data? {
-        if look == .normal, stamp == nil, !portrait { return data }
+    /// A camera photo with the look, date stamp and (optionally) a blurred or swapped
+    /// background, as JPEG. Returns the original data untouched when there's nothing to do.
+    static func processPhoto(_ data: Data, look: Look, stamp: Date?, background: BackgroundEffect?,
+                             framed: Bool = true) -> Data? {
+        if look == .normal, stamp == nil, background == nil { return data }
         guard var image = CIImage(data: data, options: [.applyOrientationProperty: true]) else { return nil }
-        if portrait, let mask = PersonSegmenter(quality: .accurate).mask(for: image) {
-            image = PersonSegmenter.blurBackground(image, mask: mask)
+        if let background, let mask = PersonSegmenter(quality: .accurate).mask(for: image) {
+            image = background.apply(to: image, mask: mask)
         }
-        return look.jpeg(look.finishPhoto(image, stamp: stamp))
+        return look.jpeg(look.finishPhoto(image, stamp: stamp, framed: framed))
     }
 
     /// A recorded video with the look and date stamp, and slowed down for slo-mo.

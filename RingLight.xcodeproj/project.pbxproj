@@ -22,6 +22,10 @@
 		0B000000000000000000000E /* Collage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A000000000000000000000E /* Collage.swift */; };
 		0B000000000000000000000F /* DualCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A000000000000000000000F /* DualCamera.swift */; };
 		0B0000000000000000000010 /* BurstPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000010 /* BurstPicker.swift */; };
+		0B0000000000000000000011 /* Backdrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000011 /* Backdrop.swift */; };
+		0B0000000000000000000012 /* PrintTray.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000012 /* PrintTray.swift */; };
+		0B0000000000000000000013 /* InstantCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000013 /* InstantCamera.swift */; };
+		0B0000000000000000000014 /* PrintCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0000000000000000000014 /* PrintCard.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +45,10 @@
 		0A000000000000000000000E /* Collage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Collage.swift; sourceTree = "<group>"; };
 		0A000000000000000000000F /* DualCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualCamera.swift; sourceTree = "<group>"; };
 		0A0000000000000000000010 /* BurstPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BurstPicker.swift; sourceTree = "<group>"; };
+		0A0000000000000000000011 /* Backdrop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Backdrop.swift; sourceTree = "<group>"; };
+		0A0000000000000000000012 /* PrintTray.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintTray.swift; sourceTree = "<group>"; };
+		0A0000000000000000000013 /* InstantCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstantCamera.swift; sourceTree = "<group>"; };
+		0A0000000000000000000014 /* PrintCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrintCard.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +79,10 @@
 				0A0000000000000000000004 /* CameraPreview.swift */,
 				0A0000000000000000000007 /* GlowView.swift */,
 				0A0000000000000000000008 /* Look.swift */,
+				0A0000000000000000000014 /* PrintCard.swift */,
+				0A0000000000000000000013 /* InstantCamera.swift */,
+				0A0000000000000000000012 /* PrintTray.swift */,
+				0A0000000000000000000011 /* Backdrop.swift */,
 				0A0000000000000000000010 /* BurstPicker.swift */,
 				0A000000000000000000000F /* DualCamera.swift */,
 				0A000000000000000000000E /* Collage.swift */,
@@ -167,6 +179,10 @@
 				0B0000000000000000000004 /* CameraPreview.swift in Sources */,
 				0B0000000000000000000007 /* GlowView.swift in Sources */,
 				0B0000000000000000000008 /* Look.swift in Sources */,
+				0B0000000000000000000014 /* PrintCard.swift in Sources */,
+				0B0000000000000000000013 /* InstantCamera.swift in Sources */,
+				0B0000000000000000000012 /* PrintTray.swift in Sources */,
+				0B0000000000000000000011 /* Backdrop.swift in Sources */,
 				0B0000000000000000000010 /* BurstPicker.swift in Sources */,
 				0B000000000000000000000F /* DualCamera.swift in Sources */,
 				0B000000000000000000000E /* Collage.swift in Sources */,

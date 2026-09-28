@@ -4,16 +4,19 @@ import Photos
 import UIKit
 
 enum CaptureMode: String, CaseIterable, Identifiable {
+    // The standard two first, then the fun ones, then the regular iPhone ones.
     case photo = "PHOTO"
     case video = "VIDEO"
-    case portrait = "PORTRAIT"
+    case booth = "BOOTH"
+    case shake = "SHAKE"
+    case backdrop = "BACKDROP"
     case dual = "DUAL"
     case dualVideo = "DUAL VIDEO"
-    case booth = "BOOTH"
     case collage = "COLLAGE"
-    case burst = "BURST"
     case boomerang = "BOOMERANG"
     case gif = "GIF"
+    case portrait = "PORTRAIT"
+    case burst = "BURST"
     case slomo = "SLO-MO"
     case timelapse = "TIMELAPSE"
 
@@ -87,11 +90,18 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
 
     @Published private(set) var mode: CaptureMode = .photo
     @Published var look: Look = .digicam
+    /// How bulgy the Fisheye look is (0...1).
+    @Published var fisheyeStrength = Look.fisheyeStrength {
+        didSet { Look.fisheyeStrength = fisheyeStrength }
+    }
     @Published var dateStamp = false
     /// Self-timer in seconds: 0, 3 or 10.
     @Published var timer = 0
     /// Back camera only: a real flash for photos, and a steady light for everything else.
     @Published var flash: FlashSetting = .off
+    @Published var backdrop: Backdrop = .schoolPhoto
+    /// The camera-roll photo picked for `Backdrop.yourPhoto`.
+    @Published private(set) var customBackdrop: CIImage?
     @Published var collageCount = 4
     @Published var dualLayout: DualLayout = .pip
     /// Where the selfie bubble sits in PiP, 0...1 with y pointing down.
@@ -144,7 +154,13 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
     private var dualWriter: FrameVideoWriter?
     private var toastWork: DispatchWorkItem?
 
-    private struct PhotoJob { let look: Look; let stamp: Date?; let portrait: Bool }
+    private struct PhotoJob {
+        let look: Look
+        let stamp: Date?
+        let background: BackgroundEffect?
+        /// SHAKE mode: comes out as a blank print to shake-develop, instead of going straight to the camera roll.
+        let instantPrint: Bool
+    }
     private struct MovieJob { let look: Look; let stamp: Date?; let slowdown: Double? }
     private struct SessionPlan { let mode: CaptureMode; let front: Bool; let ultraWide: Bool }
 
@@ -159,6 +175,48 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
         case .booth: 1
         case .collage: Collage.cellAspect(forCollageOf: collageCount)
         default: mode.isTall ? 9.0 / 16.0 : 3.0 / 4.0
+        }
+    }
+
+    /// SHAKE mode shows the plain camera (through the mirror or viewfinder): you don't see the look until it develops.
+    var previewLook: Look { mode == .shake ? .normal : look }
+    var previewDateStamp: Bool { mode == .shake ? false : dateStamp }
+
+    private var customBackdropURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("backdrop.jpg")
+    }
+
+    override init() {
+        super.init()
+        if let data = try? Data(contentsOf: customBackdropURL) {
+            customBackdrop = CIImage(data: data)
+        }
+    }
+
+    /// Uses a photo from the camera roll as the backdrop (and remembers it).
+    func setCustomBackdrop(_ data: Data) {
+        workQueue.async {
+            guard let image = CIImage(data: data, options: [.applyOrientationProperty: true]),
+                  let space = CGColorSpace(name: CGColorSpace.sRGB),
+                  let jpeg = Look.context.jpegRepresentation(of: image.scaledDown(toLongSide: 2400), colorSpace: space,
+                                                             options: [:]),
+                  let saved = CIImage(data: jpeg) else {
+                return self.showToast("Couldn't use that photo")
+            }
+            try? jpeg.write(to: self.customBackdropURL)
+            DispatchQueue.main.async {
+                self.customBackdrop = saved
+                self.backdrop = .yourPhoto
+            }
+        }
+    }
+
+    private var backgroundEffect: BackgroundEffect? {
+        switch mode {
+        case .portrait: return .blur
+        case .backdrop: return backdrop.image(custom: customBackdrop).map { .replace($0) }
+        default: return nil
         }
     }
 
@@ -286,7 +344,7 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
 
         slowMotionFPS = plan.mode == .slomo ? useSlowMotionFormat() : 30
         prepare(videoOutput.connection(with: .video))
-        frames.wantsMask = plan.mode == .portrait
+        frames.wantsMask = plan.mode == .portrait || plan.mode == .backdrop
         if cameraChanged { relockColorAfterSwitch() }
         if !session.isRunning { session.startRunning() }
     }
@@ -376,7 +434,7 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
     /// look). The current settings are captured, so it's safe to call from any thread.
     func frameSource(canvasWidth: CGFloat = 1080) -> () -> CIImage? {
         let mode = mode, layout = dualLayout, pip = pipCenter, aspect = previewAspect
-        let frames = frames, dual = dual
+        let frames = frames, dual = dual, background = backgroundEffect
         return {
             if mode.isDual {
                 guard let back = dual.back.latest, let front = dual.front.latest else { return nil }
@@ -385,8 +443,8 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
             }
             guard let snapshot = frames.snapshot else { return nil }
             var frame = snapshot.image
-            if mode == .portrait, let mask = snapshot.mask {
-                frame = PersonSegmenter.blurBackground(frame, mask: mask)
+            if let background, let mask = snapshot.mask {
+                frame = background.apply(to: frame, mask: mask)
             }
             return frame.centerCropped(toAspect: aspect)
         }
@@ -436,7 +494,8 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
                 guard go else { return }
             }
             switch mode {
-            case .photo, .portrait: capturePhoto()
+            case .photo, .portrait, .backdrop: capturePhoto()
+            case .shake: capturePhoto(instantPrint: true)
             case .dual: captureDualPhoto()
             case .video, .slomo: startMovie()
             case .timelapse: startTimelapse()
@@ -466,8 +525,10 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
 
     // MARK: Photo, portrait, dual photo
 
-    private func capturePhoto() {
-        let job = PhotoJob(look: look, stamp: stampDate, portrait: mode == .portrait)
+    private func capturePhoto(instantPrint: Bool = false) {
+        let job = instantPrint
+            ? PhotoJob(look: look, stamp: stampDate, background: nil, instantPrint: true)
+            : PhotoJob(look: look, stamp: stampDate, background: backgroundEffect, instantPrint: false)
         let flashMode: AVCaptureDevice.FlashMode = !flashAvailable ? .off : flash == .on ? .on : flash == .auto ? .auto : .off
         shotCount += 1
         sessionQueue.async {
@@ -480,6 +541,26 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
             }
             self.jobsLock.lock(); self.photoJobs[settings.uniqueID] = job; self.jobsLock.unlock()
             self.photoOutput.capturePhoto(with: settings, delegate: self)
+        }
+    }
+
+    // MARK: Shake (instant prints)
+
+    /// A developed print goes to the camera roll with its white border, dated when it was taken.
+    func saveDevelopedPrint(_ print: PrintTray.Print) {
+        workQueue.async {
+            guard let data = try? Data(contentsOf: print.url), let photo = CIImage(data: data),
+                  let framed = Look.polaroid.jpeg(Look.polaroidFrame(photo)) else {
+                return self.showToast("Couldn't save the print")
+            }
+            self.saveToPhotos(success: "Developed ✓ Saved to Photos",
+                              thumbnail: CaptureLibrary.thumbnail(photoData: framed),
+                              completion: { saved in
+                                  if saved { DispatchQueue.main.async { PrintTray.shared.remove(print) } }
+                              }) { request in
+                request.creationDate = print.taken
+                request.addResource(with: .photo, data: framed, options: nil)
+            }
         }
     }
 
@@ -783,14 +864,17 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
         }
     }
 
-    private func saveToPhotos(success: String,
+    /// `success` is the toast shown afterwards (nil for none); `completion` gets whether it saved.
+    private func saveToPhotos(success: String?,
                               thumbnail: UIImage?,
                               cleanup: (() -> Void)? = nil,
+                              completion: ((Bool) -> Void)? = nil,
                               _ addResource: @escaping (PHAssetCreationRequest) -> Void) {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
             guard status == .authorized || status == .limited else {
                 cleanup?()
                 self.showToast("Allow Photos access in Settings")
+                completion?(false)
                 return
             }
             var createdID: String?
@@ -802,8 +886,21 @@ final class CameraModel: NSObject, ObservableObject, @unchecked Sendable {  // s
                 cleanup?()
                 // Remember it's ours, so it shows up in the in-app gallery.
                 if saved, let createdID { CaptureLibrary.shared.add(id: createdID, thumbnail: thumbnail) }
-                self.showToast(saved ? success : "Couldn't save")
+                if !saved {
+                    self.showToast("Couldn't save")
+                } else if let success {
+                    self.showToast(success)
+                }
+                completion?(saved)
             }
+        }
+    }
+
+    private func saveToPhotos(success: String?, thumbnail: UIImage?,
+                              _ addResource: @escaping (PHAssetCreationRequest) -> Void) async -> Bool {
+        await withCheckedContinuation { continuation in
+            saveToPhotos(success: success, thumbnail: thumbnail, completion: { continuation.resume(returning: $0) },
+                         addResource)
         }
     }
 
@@ -824,15 +921,18 @@ extension CameraModel: AVCapturePhotoCaptureDelegate {
                      error: Error?) {
         jobsLock.lock()
         let job = photoJobs.removeValue(forKey: photo.resolvedSettings.uniqueID)
-            ?? PhotoJob(look: .normal, stamp: nil, portrait: false)
+            ?? PhotoJob(look: .normal, stamp: nil, background: nil, instantPrint: false)
         jobsLock.unlock()
         guard error == nil, let data = photo.fileDataRepresentation() else {
             showToast("Couldn't take photo")
             return
         }
         workQueue.async {
-            let processed = Look.processPhoto(data, look: job.look, stamp: job.stamp, portrait: job.portrait)
-            self.savePhoto(processed ?? data)
+            // SHAKE: the print comes out blank (no border yet; that's added when it's saved).
+            let processed = Look.processPhoto(data, look: job.look, stamp: job.stamp, background: job.background,
+                                              framed: !job.instantPrint)
+            guard job.instantPrint else { return self.savePhoto(processed ?? data) }
+            PrintTray.shared.add(processed ?? data)
         }
     }
 }
